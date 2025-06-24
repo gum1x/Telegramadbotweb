@@ -15,6 +15,7 @@ import asyncio
 import threading
 import time
 from datetime import datetime, timedelta
+from typing import Optional, Union
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_socketio import SocketIO, emit
 from telethon import TelegramClient, errors, functions
@@ -27,12 +28,12 @@ logger = logging.getLogger(__name__)
 
 # Flask app setup
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'
-socketio = SocketIO(app, cors_allowed_origins="*")
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 
 class TelegramWebBot:
     def __init__(self):
-        self.client = None
+        self.client: Optional[TelegramClient] = None
         self.user = None
         self.is_running = False
         self.stats = {
@@ -43,7 +44,7 @@ class TelegramWebBot:
             'start_time': None
         }
         self.config = self.load_config()
-        self.forwarding_task = None
+        self.forwarding_task: Optional[threading.Thread] = None
         
     def load_config(self):
         """Load configuration from JSON file"""
@@ -75,7 +76,11 @@ class TelegramWebBot:
                 return default_config
         except Exception as e:
             logger.error(f"Error loading config: {e}")
-            return {}
+            return {
+                'telegram': {'phone': '', 'api_id': '', 'api_hash': ''},
+                'forwarding': {'source_channel': '', 'enabled': False, 'interval': 3600, 'delay': 15},
+                'auto_join': {'enabled': False, 'delay': 30}
+            }
     
     def save_config(self):
         """Save configuration to JSON file"""
@@ -90,7 +95,7 @@ class TelegramWebBot:
     async def connect(self):
         """Connect to Telegram"""
         try:
-            if not self.config['telegram']['phone'] or not self.config['telegram']['api_id'] or not self.config['telegram']['api_hash']:
+            if not self.config.get('telegram', {}).get('phone') or not self.config.get('telegram', {}).get('api_id') or not self.config.get('telegram', {}).get('api_hash'):
                 return False, "Please configure Telegram credentials first"
             
             self.client = TelegramClient(
@@ -105,7 +110,7 @@ class TelegramWebBot:
                 return False, "Not authorized. Please authenticate first."
             
             self.user = await self.client.get_me()
-            return True, f"Connected as @{self.user.username}"
+            return True, f"Connected as @{getattr(self.user, 'username', 'Unknown')}"
             
         except Exception as e:
             return False, f"Connection failed: {e}"
@@ -119,7 +124,7 @@ class TelegramWebBot:
             await self.client.send_code_request(phone)
             await self.client.sign_in(phone, code)
             self.user = await self.client.get_me()
-            return True, f"Authenticated as @{self.user.username}"
+            return True, f"Authenticated as @{getattr(self.user, 'username', 'Unknown')}"
             
         except errors.SessionPasswordNeededError:
             return False, "2FA password required"
@@ -157,7 +162,7 @@ class TelegramWebBot:
     async def forward_message(self):
         """Forward latest message from source channel to all groups"""
         try:
-            if not self.client or not self.config['forwarding']['source_channel']:
+            if not self.client or not self.config.get('forwarding', {}).get('source_channel'):
                 return False, "No source channel configured"
             
             # Get source channel
@@ -236,7 +241,7 @@ class TelegramWebBot:
         
         while self.is_running:
             try:
-                if self.config['forwarding']['enabled']:
+                if self.config.get('forwarding', {}).get('enabled', False):
                     success, message = await self.forward_message()
                     if success:
                         logger.info(f"Forwarding successful: {message}")
@@ -244,7 +249,7 @@ class TelegramWebBot:
                         logger.error(f"Forwarding failed: {message}")
                 
                 # Wait for next cycle
-                await asyncio.sleep(self.config['forwarding']['interval'])
+                await asyncio.sleep(self.config.get('forwarding', {}).get('interval', 3600))
                 
             except Exception as e:
                 logger.error(f"Error in forwarding loop: {e}")
@@ -253,8 +258,9 @@ class TelegramWebBot:
     def stop_forwarding(self):
         """Stop the forwarding loop"""
         self.is_running = False
-        if self.forwarding_task:
-            self.forwarding_task.cancel()
+        if self.forwarding_task and hasattr(self.forwarding_task, 'is_alive') and self.forwarding_task.is_alive():
+            # For threading.Thread, we can't cancel, just set the flag
+            pass
 
 # Global bot instance
 bot = TelegramWebBot()
@@ -296,22 +302,33 @@ def api_connect():
         success, message = await bot.connect()
         return {'success': success, 'message': message}
     
-    result = asyncio.run(_connect())
-    return jsonify(result)
+    try:
+        result = asyncio.run(_connect())
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Connect error: {e}")
+        return jsonify({'success': False, 'message': f'Connection error: {e}'})
 
 @app.route('/api/authenticate', methods=['POST'])
 def api_authenticate():
     """API endpoint to authenticate"""
-    data = request.get_json()
-    phone = data.get('phone')
-    code = data.get('code')
-    
-    async def _authenticate():
-        success, message = await bot.authenticate(phone, code)
-        return {'success': success, 'message': message}
-    
-    result = asyncio.run(_authenticate())
-    return jsonify(result)
+    try:
+        data = request.get_json()
+        phone = data.get('phone')
+        code = data.get('code')
+        
+        if not phone or not code:
+            return jsonify({'success': False, 'message': 'Phone and code required'})
+        
+        async def _authenticate():
+            success, message = await bot.authenticate(phone, code)
+            return {'success': success, 'message': message}
+        
+        result = asyncio.run(_authenticate())
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Authentication error: {e}")
+        return jsonify({'success': False, 'message': f'Authentication error: {e}'})
 
 @app.route('/api/groups')
 def api_groups():
@@ -319,8 +336,12 @@ def api_groups():
     async def _get_groups():
         return await bot.get_groups()
     
-    groups = asyncio.run(_get_groups())
-    return jsonify(groups)
+    try:
+        groups = asyncio.run(_get_groups())
+        return jsonify(groups)
+    except Exception as e:
+        logger.error(f"Get groups error: {e}")
+        return jsonify([])
 
 @app.route('/api/channels')
 def api_channels():
@@ -328,8 +349,12 @@ def api_channels():
     async def _get_channels():
         return await bot.get_channels()
     
-    channels = asyncio.run(_get_channels())
-    return jsonify(channels)
+    try:
+        channels = asyncio.run(_get_channels())
+        return jsonify(channels)
+    except Exception as e:
+        logger.error(f"Get channels error: {e}")
+        return jsonify([])
 
 @app.route('/api/forward', methods=['POST'])
 def api_forward():
@@ -337,8 +362,12 @@ def api_forward():
     async def _forward():
         return await bot.forward_message()
     
-    success, message = asyncio.run(_forward())
-    return jsonify({'success': success, 'message': message})
+    try:
+        success, message = asyncio.run(_forward())
+        return jsonify({'success': success, 'message': message})
+    except Exception as e:
+        logger.error(f"Forward error: {e}")
+        return jsonify({'success': False, 'message': f'Forward error: {e}'})
 
 @app.route('/api/join-groups', methods=['POST'])
 def api_join_groups():
@@ -346,23 +375,47 @@ def api_join_groups():
     async def _join_groups():
         return await bot.join_groups_from_file()
     
-    success, message = asyncio.run(_join_groups())
-    return jsonify({'success': success, 'message': message})
+    try:
+        success, message = asyncio.run(_join_groups())
+        return jsonify({'success': success, 'message': message})
+    except Exception as e:
+        logger.error(f"Join groups error: {e}")
+        return jsonify({'success': False, 'message': f'Join groups error: {e}'})
 
 @app.route('/api/start-forwarding', methods=['POST'])
 def api_start_forwarding():
     """API endpoint to start automatic forwarding"""
-    if not bot.is_running:
-        bot.forwarding_task = asyncio.create_task(bot.start_forwarding_loop())
-        return jsonify({'success': True, 'message': 'Forwarding started'})
-    else:
-        return jsonify({'success': False, 'message': 'Forwarding already running'})
+    try:
+        if not bot.is_running:
+            # Create a new thread for the forwarding loop
+            def run_forwarding():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(bot.start_forwarding_loop())
+                except Exception as e:
+                    logger.error(f"Forwarding loop error: {e}")
+                finally:
+                    loop.close()
+            
+            bot.forwarding_task = threading.Thread(target=run_forwarding, daemon=True)
+            bot.forwarding_task.start()
+            return jsonify({'success': True, 'message': 'Forwarding started'})
+        else:
+            return jsonify({'success': False, 'message': 'Forwarding already running'})
+    except Exception as e:
+        logger.error(f"Start forwarding error: {e}")
+        return jsonify({'success': False, 'message': f'Start forwarding error: {e}'})
 
 @app.route('/api/stop-forwarding', methods=['POST'])
 def api_stop_forwarding():
     """API endpoint to stop automatic forwarding"""
-    bot.stop_forwarding()
-    return jsonify({'success': True, 'message': 'Forwarding stopped'})
+    try:
+        bot.stop_forwarding()
+        return jsonify({'success': True, 'message': 'Forwarding stopped'})
+    except Exception as e:
+        logger.error(f"Stop forwarding error: {e}")
+        return jsonify({'success': False, 'message': f'Stop forwarding error: {e}'})
 
 @app.route('/api/stats')
 def api_stats():
@@ -370,4 +423,14 @@ def api_stats():
     return jsonify(bot.stats)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True) 
+    # Production settings
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    port = int(os.environ.get('PORT', 5000))
+    
+    socketio.run(
+        app, 
+        host='0.0.0.0', 
+        port=port, 
+        debug=debug_mode,
+        server='gevent'
+    ) 

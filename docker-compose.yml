@@ -2,21 +2,30 @@ version: '3.8'
 
 services:
   telegram-adbot:
-    build: .
-    container_name: telegram-adbot
-    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: telegram-adbot-web
+    ports:
+      - "5000:5000"
     environment:
-      - TELEGRAM_PHONE=${TELEGRAM_PHONE}
-      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
-      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
-      - SOURCE_CHANNEL=${SOURCE_CHANNEL:-@your_channel}
-      - FORWARD_INTERVAL=${FORWARD_INTERVAL:-3600}
-      - SEND_DELAY=${SEND_DELAY:-2}
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this-in-production}
+      - PORT=5000
     volumes:
-      - ./assets/sessions:/app/assets/sessions
-      - ./bot.log:/app/bot.log
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3" 
+      - ./assets:/app/assets
+      - ./config.json:/app/config.json
+      - ./groups.txt:/app/groups.txt
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - adbot-network
+
+networks:
+  adbot-network:
+    driver: bridge 

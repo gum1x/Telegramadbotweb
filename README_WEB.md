@@ -1,235 +1,261 @@
-# Telegram AdBot - Web Version
+# Telegram AdBot Web Panel
 
-A simplified Telegram AdBot with a beautiful web interface for easy control and management.
+A modern web-based Telegram bot for forwarding messages from channels to groups with an easy-to-use dashboard.
 
-## 🌟 Features
+## Features
 
-- **Web Dashboard**: Beautiful, responsive web interface
-- **Easy Configuration**: Simple setup through web forms
-- **Real-time Statistics**: Live updates of bot performance
-- **One-click Actions**: Forward messages, join groups, start/stop automation
-- **Authentication**: Built-in Telegram authentication flow
-- **Group Management**: View and manage your groups and channels
-- **Auto-forwarding**: Schedule automatic message forwarding
-- **Mobile Friendly**: Works on all devices
+- 🌐 **Web Dashboard** - Beautiful, responsive web interface
+- 📱 **Telegram Integration** - Connect and authenticate via web
+- 📤 **Message Forwarding** - Forward messages from channels to groups
+- 🔄 **Auto Forwarding** - Set up automatic forwarding with configurable intervals
+- 👥 **Group Management** - View and manage your groups
+- 📊 **Statistics** - Real-time statistics and monitoring
+- 🚀 **Easy Deployment** - Docker support for easy deployment
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1. Install Dependencies
+### 1. Prerequisites
+
+- Python 3.8+ or Docker
+- Telegram API credentials (get from https://my.telegram.org/apps)
+
+### 2. Local Development
 
 ```bash
+# Clone the repository
+git clone <your-repo-url>
+cd Telegram-AdBot
+
+# Install dependencies
 pip install -r requirements_web.txt
-```
 
-### 2. Run the Web Bot
+# Copy environment file
+cp env.example .env
 
-```bash
+# Edit .env with your credentials
+nano .env
+
+# Run the web bot
 python web_bot.py
 ```
 
-### 3. Open Your Browser
+### 3. Docker Deployment
 
-Navigate to `http://localhost:5000`
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
 
-## 📋 Setup Instructions
+# Or build manually
+docker build -f Dockerfile.web -t telegram-adbot .
+docker run -p 5000:5000 telegram-adbot
+```
 
-### Step 1: Get Telegram API Credentials
+## Configuration
 
-1. Go to [my.telegram.org/auth](https://my.telegram.org/auth)
-2. Log in with your phone number
-3. Click on "API development tools"
-4. Create a new application
-5. Copy the **API ID** and **API Hash**
+### Environment Variables
 
-### Step 2: Configure the Bot
+Copy `env.example` to `.env` and configure:
 
-1. Open the web interface at `http://localhost:5000`
-2. Go to **Settings** tab
-3. Enter your Telegram credentials:
-   - Phone number
-   - API ID
-   - API Hash
-4. Configure forwarding settings:
-   - Source channel (e.g., `@your_channel`)
-   - Forward interval (default: 1 hour)
-   - Delay between forwards (default: 15 seconds)
-5. Click **Save Configuration**
+```bash
+# Telegram API Credentials
+TELEGRAM_API_ID=your_api_id_here
+TELEGRAM_API_HASH=your_api_hash_here
+TELEGRAM_PHONE=your_phone_number_here
 
-### Step 3: Authenticate
+# Flask Configuration
+SECRET_KEY=your-secret-key-change-this-in-production
+FLASK_ENV=production
+PORT=5000
 
-1. Go to **Dashboard**
-2. Click **Connect to Telegram**
+# Forwarding Configuration
+SOURCE_CHANNEL=@your_source_channel
+FORWARD_INTERVAL=3600  # seconds
+SEND_DELAY=15  # seconds between forwards
+```
+
+### Web Interface Configuration
+
+1. Open http://localhost:5000
+2. Go to Configuration tab
+3. Enter your Telegram credentials
+4. Set source channel and forwarding settings
+5. Save configuration
+
+## Usage
+
+### 1. Connect to Telegram
+
+1. Go to the Dashboard
+2. Click "Connect to Telegram"
 3. Enter your phone number
 4. Enter the verification code sent to your phone
-5. You're now connected!
 
-### Step 4: Add Groups
+### 2. Configure Forwarding
 
-Create a `groups.txt` file in the bot directory with one group invite link per line:
+1. Go to Configuration tab
+2. Set your source channel (e.g., @channel_name)
+3. Configure forwarding interval and delays
+4. Save configuration
+
+### 3. Start Forwarding
+
+1. Go to Dashboard
+2. Click "Forward Message" to send once
+3. Or click "Start Auto Forwarding" for continuous forwarding
+
+### 4. Join Groups
+
+1. Create a `groups.txt` file with group invite links
+2. Go to Dashboard
+3. Click "Join Groups" to automatically join
+
+## File Structure
 
 ```
-https://t.me/group1
-https://t.me/group2
-@group3
+Telegram-AdBot/
+├── web_bot.py              # Main web application
+├── requirements_web.txt     # Python dependencies
+├── Dockerfile.web          # Docker configuration
+├── docker-compose.yml      # Docker Compose setup
+├── templates/              # HTML templates
+│   ├── base.html
+│   ├── index.html
+│   └── config.html
+├── static/                 # Static assets
+│   ├── css/style.css
+│   └── js/app.js
+├── assets/                 # Data directory
+│   ├── sessions/           # Telegram sessions
+│   ├── config.json         # Configuration file
+│   └── groups.txt          # Group invite links
+└── README_WEB.md          # This file
 ```
 
-## 🎮 Using the Web Interface
+## API Endpoints
 
-### Dashboard
-
-- **Connection Status**: Shows if you're connected to Telegram
-- **Statistics**: Real-time stats of messages forwarded, groups joined, etc.
-- **Quick Actions**: One-click buttons for common tasks
-- **Groups & Channels**: View all your groups and available channels
-
-### Quick Actions
-
-- **Forward Now**: Manually forward the latest message from your source channel
-- **Join Groups**: Automatically join groups from your `groups.txt` file
-- **Start Auto Forward**: Begin automatic forwarding every hour
-- **Stop Auto Forward**: Stop automatic forwarding
-
-### Settings
-
-- **Telegram Credentials**: Update your API credentials
-- **Forwarding Settings**: Configure source channel and timing
-- **Auto-join Settings**: Control group joining behavior
-
-## 🔧 Configuration Options
-
-### Forwarding Settings
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Source Channel | Channel to forward from | Required |
-| Forward Interval | How often to check (seconds) | 3600 (1 hour) |
-| Delay Between Forwards | Delay between groups (seconds) | 15 |
-
-### Auto-join Settings
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Enable Auto-join | Automatically join groups | Off |
-| Join Delay | Delay between joins (seconds) | 30 |
-
-## 🐳 Docker Deployment
-
-### Build and Run
-
-```bash
-# Build the Docker image
-docker build -f Dockerfile.web -t telegram-adbot-web .
-
-# Run the container
-docker run -p 5000:5000 telegram-adbot-web
-```
-
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  telegram-adbot:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./config.json:/app/config.json
-      - ./groups.txt:/app/groups.txt
-    restart: unless-stopped
-```
-
-## 🌐 Back4App Deployment
-
-### 1. Prepare Your Repository
-
-```bash
-git add .
-git commit -m "Add web interface"
-git push
-```
-
-### 2. Deploy to Back4App
-
-1. Go to [back4app.com](https://back4app.com)
-2. Use your existing app: `kDilA3yEbpOrsgnoVyv6NVtuPVC9hULUkYahSVsq`
-3. Connect your GitHub repository
-4. Set environment variables:
-   ```
-   FLASK_APP=web_bot.py
-   FLASK_ENV=production
-   ```
-5. Deploy using the Dockerfile.web
-
-### 3. Access Your Bot
-
-Your web interface will be available at your Back4App URL.
-
-## 📱 Mobile Usage
-
-The web interface is fully responsive and works great on mobile devices:
-
-- **Dashboard**: View stats and control the bot
-- **Settings**: Configure all options
-- **Quick Actions**: One-tap forwarding and group joining
-
-## 🔒 Security Features
-
-- **Session Management**: Secure Telegram session handling
-- **Input Validation**: All inputs are validated
-- **Rate Limiting**: Built-in delays to avoid Telegram restrictions
-- **Error Handling**: Comprehensive error handling and logging
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-1. **"Not authorized" error**
-   - Make sure you've entered the correct credentials
-   - Try re-authenticating through the web interface
-
-2. **"No groups found"**
-   - Join some groups manually first
-   - Use the "Join Groups" button to auto-join from your list
-
-3. **"Source channel not found"**
-   - Check that the channel username is correct
-   - Make sure you're a member of the channel
-
-4. **Rate limiting issues**
-   - Increase the delay between forwards
-   - Reduce the number of groups
-
-### Logs
-
-Check the console output for detailed error messages and logs.
-
-## 📊 Statistics
-
-The dashboard shows real-time statistics:
-
-- **Messages Forwarded**: Total messages sent to groups
-- **Groups Joined**: Number of groups joined automatically
-- **Errors**: Number of errors encountered
-- **Last Forward**: When the last message was forwarded
-
-## 🔄 API Endpoints
-
-The web interface uses these API endpoints:
-
+- `GET /` - Main dashboard
+- `GET /config` - Configuration page
 - `POST /api/connect` - Connect to Telegram
 - `POST /api/authenticate` - Authenticate with code
 - `GET /api/groups` - Get user's groups
-- `GET /api/channels` - Get available channels
+- `GET /api/channels` - Get user's channels
 - `POST /api/forward` - Forward message manually
 - `POST /api/join-groups` - Join groups from file
-- `POST /api/start-forwarding` - Start auto-forwarding
-- `POST /api/stop-forwarding` - Stop auto-forwarding
+- `POST /api/start-forwarding` - Start auto forwarding
+- `POST /api/stop-forwarding` - Stop auto forwarding
 - `GET /api/stats` - Get statistics
 
-## 🤝 Contributing
+## Troubleshooting
+
+### Common Issues
+
+1. **Import Errors**
+   ```bash
+   pip install -r requirements_web.txt
+   ```
+
+2. **Telegram Connection Issues**
+   - Verify API credentials
+   - Check phone number format (+1234567890)
+   - Ensure you're not rate limited
+
+3. **Permission Errors**
+   ```bash
+   chmod 755 assets/
+   chmod 644 config.json
+   ```
+
+4. **Docker Issues**
+   ```bash
+   docker-compose down
+   docker-compose up --build
+   ```
+
+5. **Port Already in Use**
+   ```bash
+   # Change port in .env
+   PORT=5001
+   ```
+
+### Logs
+
+Check logs for debugging:
+
+```bash
+# Local
+python web_bot.py
+
+# Docker
+docker-compose logs -f telegram-adbot
+```
+
+### Health Check
+
+The application includes a health check endpoint:
+
+```bash
+curl http://localhost:5000/api/stats
+```
+
+## Security Considerations
+
+1. **Change Default Secret Key**
+   ```bash
+   SECRET_KEY=your-very-secure-random-key
+   ```
+
+2. **Use HTTPS in Production**
+   - Set up reverse proxy (nginx)
+   - Use SSL certificates
+
+3. **Environment Variables**
+   - Never commit `.env` files
+   - Use secure secret management
+
+4. **File Permissions**
+   - Restrict access to sensitive files
+   - Use non-root user in Docker
+
+## Production Deployment
+
+### Using Docker Compose
+
+```bash
+# Production deployment
+docker-compose -f docker-compose.yml up -d
+
+# With custom environment
+SECRET_KEY=your-secret docker-compose up -d
+```
+
+### Using Gunicorn (Alternative)
+
+```bash
+# Install gunicorn
+pip install gunicorn
+
+# Run with gunicorn
+gunicorn -w 4 -k gevent -b 0.0.0.0:5000 web_bot:app
+```
+
+### Reverse Proxy Setup (Nginx)
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -237,19 +263,13 @@ The web interface uses these API endpoints:
 4. Test thoroughly
 5. Submit a pull request
 
-## 📄 License
+## License
 
-This project is licensed under the same license as the original Telegram-AdBot project.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Support
+## Support
 
-If you need help:
-
+For issues and questions:
 1. Check the troubleshooting section
-2. Look at the console logs
-3. Verify your configuration
-4. Test with a simple setup first
-
----
-
-**Enjoy your simplified Telegram AdBot with web interface! 🚀** 
+2. Review the logs
+3. Create an issue on GitHub 

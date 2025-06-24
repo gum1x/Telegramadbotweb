@@ -1,0 +1,17 @@
+{
+  "telegram": {
+    "phone": "",
+    "api_id": "",
+    "api_hash": ""
+  },
+  "forwarding": {
+    "source_channel": "",
+    "enabled": false,
+    "interval": 3600,
+    "delay": 15
+  },
+  "auto_join": {
+    "enabled": false,
+    "delay": 30
+  }
+}
