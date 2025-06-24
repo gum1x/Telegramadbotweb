@@ -1,0 +1,13 @@
+# Telegram Group Invite Links
+# Add one invite link per line
+# You can use full URLs or just the group username
+
+# Examples:
+# https://t.me/groupname
+# @groupname
+# t.me/groupname
+
+# Add your groups below:
+https://t.me/examplegroup1
+https://t.me/examplegroup2
+@examplegroup3 

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Telegram AdBot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog"></i> Settings
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-robot"></i> Bot Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <h6 class="mb-3">Telegram API Credentials</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ bot.config.telegram.phone }}" placeholder="+1234567890" required>
+                            <div class="form-text">Your Telegram phone number</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="api_id" class="form-label">API ID</label>
+                            <input type="number" class="form-control" id="api_id" name="api_id" 
+                                   value="{{ bot.config.telegram.api_id }}" placeholder="12345678" required>
+                            <div class="form-text">Get from <a href="https://my.telegram.org/auth" target="_blank">my.telegram.org</a></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="api_hash" class="form-label">API Hash</label>
+                            <input type="text" class="form-control" id="api_hash" name="api_hash" 
+                                   value="{{ bot.config.telegram.api_hash }}" placeholder="your_api_hash_here" required>
+                            <div class="form-text">Get from <a href="https://my.telegram.org/auth" target="_blank">my.telegram.org</a></div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="mb-3">Forwarding Settings</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="source_channel" class="form-label">Source Channel</label>
+                            <input type="text" class="form-control" id="source_channel" name="source_channel" 
+                                   value="{{ bot.config.forwarding.source_channel }}" placeholder="@channel_username">
+                            <div class="form-text">Channel to forward messages from</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="forwarding_enabled" name="forwarding_enabled" 
+                                       {% if bot.config.forwarding.enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="forwarding_enabled">
+                                    Enable Automatic Forwarding
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="interval" class="form-label">Forward Interval (seconds)</label>
+                            <input type="number" class="form-control" id="interval" name="interval" 
+                                   value="{{ bot.config.forwarding.interval }}" min="60" max="86400">
+                            <div class="form-text">How often to check for new messages (3600 = 1 hour)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="delay" class="form-label">Delay Between Forwards (seconds)</label>
+                            <input type="number" class="form-control" id="delay" name="delay" 
+                                   value="{{ bot.config.forwarding.delay }}" min="1" max="60">
+                            <div class="form-text">Delay between forwarding to different groups</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="mb-3">Auto-Join Settings</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="auto_join_enabled" name="auto_join_enabled" 
+                                       {% if bot.config.auto_join.enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="auto_join_enabled">
+                                    Enable Auto-Join Groups
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="join_delay" class="form-label">Join Delay (seconds)</label>
+                            <input type="number" class="form-control" id="join_delay" name="join_delay" 
+                                   value="{{ bot.config.auto_join.delay }}" min="5" max="300">
+                            <div class="form-text">Delay between joining groups</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Setup Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Getting Telegram API Credentials:</h6>
+                <ol>
+                    <li>Go to <a href="https://my.telegram.org/auth" target="_blank">my.telegram.org/auth</a></li>
+                    <li>Log in with your phone number</li>
+                    <li>Click on "API development tools"</li>
+                    <li>Create a new application</li>
+                    <li>Copy the API ID and API Hash</li>
+                </ol>
+
+                <h6>Setting up Groups:</h6>
+                <ol>
+                    <li>Create a file called <code>groups.txt</code> in the bot directory</li>
+                    <li>Add one Telegram group invite link per line</li>
+                    <li>Example format: <code>https://t.me/groupname</code></li>
+                </ol>
+
+                <h6>Using the Bot:</h6>
+                <ol>
+                    <li>Save your configuration</li>
+                    <li>Go to the Dashboard</li>
+                    <li>Click "Connect to Telegram"</li>
+                    <li>Authenticate with your phone number</li>
+                    <li>Use the Quick Actions to control the bot</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

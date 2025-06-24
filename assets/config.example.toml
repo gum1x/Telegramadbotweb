@@ -1,17 +1,9 @@
 [telegram]
 # Get your API ID/HASH from https://my.telegram.org/auth
-
-phone_number = "+12064757656"
-api_id = 23337938
-api_hash = "f49652eb9d10d48f2432770a55430d11"
-
-[forwarding]
-# Channel to forward messages from (replace with your actual channel)
-source_channel = "@your_channel_username"
-# How often to check for new messages (in seconds) - 1 hour default
-forward_interval = 3600
-# Delay between forwarding to different groups (in seconds)
-send_delay = 2
+# Replace these with your actual credentials
+phone_number = "+1234567890"
+api_id = 12345678
+api_hash = "your_api_hash_here"
 
 [sending]
 # The send interval is how long to wait between sending messages (in seconds)
@@ -43,4 +35,4 @@ max_inactive_days = 30
 # Whether to skip channels (only join groups)
 skip_channels = true
 # Whether to check group activity before joining
-check_activity = true
+check_activity = true 

@@ -1,0 +1,18 @@
+[
+  {
+    "phone": "+1234567890",
+    "api_id": "12345678",
+    "api_hash": "your_api_hash_here",
+    "name": "Bot 1",
+    "enabled": true,
+    "created_at": "2024-01-01T00:00:00"
+  },
+  {
+    "phone": "+0987654321",
+    "api_id": "87654321",
+    "api_hash": "another_api_hash_here",
+    "name": "Bot 2",
+    "enabled": true,
+    "created_at": "2024-01-01T00:00:00"
+  }
+] 

@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Telegram AdBot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Connection Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plug"></i> Connection Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="connection-status" class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Not connected
+                </div>
+                <button id="connect-btn" class="btn btn-primary">
+                    <i class="fas fa-link"></i> Connect to Telegram
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-paper-plane fa-2x text-primary mb-2"></i>
+                <h5 class="card-title">Messages Forwarded</h5>
+                <h3 id="messages-forwarded" class="text-primary">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                <h5 class="card-title">Groups Joined</h5>
+                <h3 id="groups-joined" class="text-success">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Errors</h5>
+                <h3 id="errors" class="text-warning">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                <h5 class="card-title">Last Forward</h5>
+                <h6 id="last-forward" class="text-info">Never</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <button id="forward-btn" class="btn btn-success w-100" disabled>
+                            <i class="fas fa-share"></i> Forward Now
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button id="join-groups-btn" class="btn btn-info w-100" disabled>
+                            <i class="fas fa-user-plus"></i> Join Groups
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button id="start-auto-btn" class="btn btn-primary w-100" disabled>
+                            <i class="fas fa-play"></i> Start Auto Forward
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button id="stop-auto-btn" class="btn btn-danger w-100" disabled>
+                            <i class="fas fa-stop"></i> Stop Auto Forward
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Groups and Channels -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users"></i> Your Groups
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="groups-list" class="list-group">
+                    <div class="text-muted">Loading groups...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-broadcast-tower"></i> Available Channels
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="channels-list" class="list-group">
+                    <div class="text-muted">Loading channels...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Authentication Modal -->
+<div class="modal fade" id="authModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Telegram Authentication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="auth-step-1">
+                    <p>Enter your phone number to receive a verification code:</p>
+                    <div class="mb-3">
+                        <input type="tel" id="phone-input" class="form-control" placeholder="+1234567890">
+                    </div>
+                    <button id="send-code-btn" class="btn btn-primary">Send Code</button>
+                </div>
+                <div id="auth-step-2" style="display: none;">
+                    <p>Enter the verification code sent to your phone:</p>
+                    <div class="mb-3">
+                        <input type="text" id="code-input" class="form-control" placeholder="12345">
+                    </div>
+                    <button id="verify-code-btn" class="btn btn-success">Verify Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    loadStats();
+    loadGroups();
+    loadChannels();
+    
+    // Set up event listeners
+    document.getElementById('connect-btn').addEventListener('click', connectToTelegram);
+    document.getElementById('forward-btn').addEventListener('click', forwardMessage);
+    document.getElementById('join-groups-btn').addEventListener('click', joinGroups);
+    document.getElementById('start-auto-btn').addEventListener('click', startAutoForward);
+    document.getElementById('stop-auto-btn').addEventListener('click', stopAutoForward);
+    document.getElementById('send-code-btn').addEventListener('click', sendCode);
+    document.getElementById('verify-code-btn').addEventListener('click', verifyCode);
+    
+    // Auto-refresh stats every 30 seconds
+    setInterval(loadStats, 30000);
+});
+
+function loadStats() {
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('messages-forwarded').textContent = data.messages_forwarded || 0;
+            document.getElementById('groups-joined').textContent = data.groups_joined || 0;
+            document.getElementById('errors').textContent = data.errors || 0;
+            document.getElementById('last-forward').textContent = data.last_forward ? new Date(data.last_forward).toLocaleString() : 'Never';
+        })
+        .catch(error => console.error('Error loading stats:', error));
+}
+
+function loadGroups() {
+    fetch('/api/groups')
+        .then(response => response.json())
+        .then(groups => {
+            const container = document.getElementById('groups-list');
+            if (groups.length === 0) {
+                container.innerHTML = '<div class="text-muted">No groups found</div>';
+            } else {
+                container.innerHTML = groups.map(group => 
+                    `<div class="list-group-item">${group.title}</div>`
+                ).join('');
+            }
+        })
+        .catch(error => console.error('Error loading groups:', error));
+}
+
+function loadChannels() {
+    fetch('/api/channels')
+        .then(response => response.json())
+        .then(channels => {
+            const container = document.getElementById('channels-list');
+            if (channels.length === 0) {
+                container.innerHTML = '<div class="text-muted">No channels found</div>';
+            } else {
+                container.innerHTML = channels.map(channel => 
+                    `<div class="list-group-item">${channel.title} ${channel.username ? `(@${channel.username})` : ''}</div>`
+                ).join('');
+            }
+        })
+        .catch(error => console.error('Error loading channels:', error));
+}
+
+function connectToTelegram() {
+    fetch('/api/connect', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateConnectionStatus('success', data.message);
+                enableButtons();
+            } else {
+                if (data.message.includes('Not authorized')) {
+                    showAuthModal();
+                } else {
+                    updateConnectionStatus('danger', data.message);
+                }
+            }
+        })
+        .catch(error => {
+            updateConnectionStatus('danger', 'Connection failed');
+            console.error('Error:', error);
+        });
+}
+
+function updateConnectionStatus(type, message) {
+    const status = document.getElementById('connection-status');
+    status.className = `alert alert-${type}`;
+    status.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}`;
+}
+
+function enableButtons() {
+    document.getElementById('forward-btn').disabled = false;
+    document.getElementById('join-groups-btn').disabled = false;
+    document.getElementById('start-auto-btn').disabled = false;
+    document.getElementById('stop-auto-btn').disabled = false;
+}
+
+function showAuthModal() {
+    const modal = new bootstrap.Modal(document.getElementById('authModal'));
+    modal.show();
+}
+
+function sendCode() {
+    const phone = document.getElementById('phone-input').value;
+    if (!phone) {
+        alert('Please enter your phone number');
+        return;
+    }
+    
+    // Store phone for verification
+    window.authPhone = phone;
+    document.getElementById('auth-step-1').style.display = 'none';
+    document.getElementById('auth-step-2').style.display = 'block';
+}
+
+function verifyCode() {
+    const code = document.getElementById('code-input').value;
+    if (!code) {
+        alert('Please enter the verification code');
+        return;
+    }
+    
+    fetch('/api/authenticate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: window.authPhone, code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+            updateConnectionStatus('success', data.message);
+            enableButtons();
+            loadGroups();
+            loadChannels();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        alert('Authentication failed');
+        console.error('Error:', error);
+    });
+}
+
+function forwardMessage() {
+    fetch('/api/forward', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Message forwarded successfully!');
+                loadStats();
+            } else {
+                alert('Forwarding failed: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Forwarding failed');
+            console.error('Error:', error);
+        });
+}
+
+function joinGroups() {
+    if (confirm('This will attempt to join groups from groups.txt. Continue?')) {
+        fetch('/api/join-groups', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    loadStats();
+                    loadGroups();
+                }
+            })
+            .catch(error => {
+                alert('Failed to join groups');
+                console.error('Error:', error);
+            });
+    }
+}
+
+function startAutoForward() {
+    fetch('/api/start-forwarding', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) {
+                document.getElementById('start-auto-btn').disabled = true;
+                document.getElementById('stop-auto-btn').disabled = false;
+            }
+        })
+        .catch(error => {
+            alert('Failed to start auto forwarding');
+            console.error('Error:', error);
+        });
+}
+
+function stopAutoForward() {
+    fetch('/api/stop-forwarding', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            document.getElementById('start-auto-btn').disabled = false;
+            document.getElementById('stop-auto-btn').disabled = true;
+        })
+        .catch(error => {
+            alert('Failed to stop auto forwarding');
+            console.error('Error:', error);
+        });
+}
+</script>
+{% endblock %} 

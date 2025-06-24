@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  telegram-adbot:
+    build: .
+    container_name: telegram-adbot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_PHONE=${TELEGRAM_PHONE}
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - SOURCE_CHANNEL=${SOURCE_CHANNEL:-@your_channel}
+      - FORWARD_INTERVAL=${FORWARD_INTERVAL:-3600}
+      - SEND_DELAY=${SEND_DELAY:-2}
+    volumes:
+      - ./assets/sessions:/app/assets/sessions
+      - ./bot.log:/app/bot.log
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 
